@@ -514,19 +514,24 @@
         <div class="ic"><div class="e">🕐</div><div><div class="k">Hours</div><div class="v">Mon–Fri 8:00 AM – 8:00 PM<br>Sat 8:00 AM – 5:00 PM · Sun Closed</div></div></div>
         <div class="ic"><div class="e">💳</div><div><div class="k">Payment</div><div class="v">Cash · Card · Zelle · Venmo</div></div></div>
       </div>
-      <div class="form rv">
+      <form id="contactForm" class="form rv">
         <h3>Send a Message</h3>
+        <!-- Web3Forms settings + hidden honeypot to block spam bots -->
+        <input type="hidden" name="access_key" value="6b88d89f-b102-4c9a-8bd2-71ca46ffd766">
+        <input type="hidden" name="subject" value="New request from the Alfa Motors website">
+        <input type="hidden" name="from_name" value="Alfa Motors Website">
+        <input type="checkbox" name="botcheck" tabindex="-1" autocomplete="off" style="display:none">
         <div class="frow">
-          <div class="field"><label>First Name</label><input type="text" placeholder="First name"></div>
-          <div class="field"><label>Last Name</label><input type="text" placeholder="Last name"></div>
+          <div class="field"><label>First Name</label><input type="text" name="First Name" placeholder="First name" required></div>
+          <div class="field"><label>Last Name</label><input type="text" name="Last Name" placeholder="Last name" required></div>
         </div>
         <div class="frow">
-          <div class="field"><label>Phone</label><input type="tel" placeholder="(000) 000-0000"></div>
-          <div class="field"><label>Email</label><input type="email" placeholder="you@email.com"></div>
+          <div class="field"><label>Phone</label><input type="tel" name="Phone" placeholder="(000) 000-0000" required></div>
+          <div class="field"><label>Email</label><input type="email" name="Email" placeholder="you@email.com" required></div>
         </div>
-        <div class="field"><label>Vehicle Year, Make &amp; Model</label><input type="text" placeholder="e.g. 2015 Toyota Camry"></div>
+        <div class="field"><label>Vehicle Year, Make &amp; Model</label><input type="text" name="Vehicle" placeholder="e.g. 2015 Toyota Camry"></div>
         <div class="field"><label>Service Needed</label>
-          <select>
+          <select name="Service Needed">
             <option>Select a Service</option>
             <option>Electric Systems / PCM / ECM / BCM</option>
             <option>Car Key Programming</option>
@@ -540,9 +545,10 @@
             <option>Other</option>
           </select>
         </div>
-        <div class="field"><label>Describe the Problem</label><textarea placeholder="Tell us what's going on with your vehicle..."></textarea></div>
-        <button class="btn btn-primary" onclick="alert('Thanks! In the live version this sends straight to Luis. For now, please call (469) 951-0500.')">📞 Send My Request</button>
-      </div>
+        <div class="field"><label>Describe the Problem</label><textarea name="Message" placeholder="Tell us what's going on with your vehicle..."></textarea></div>
+        <button type="submit" class="btn btn-primary">📞 Send My Request</button>
+        <p id="formMsg" role="status" style="display:none;margin-top:14px;font-weight:600"></p>
+      </form>
     </div>
   </div>
 </section>
@@ -568,6 +574,33 @@
   // reveal on scroll
   const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
   document.querySelectorAll('.rv').forEach((el,i)=>{el.style.transitionDelay=(i%4*60)+'ms';io.observe(el)});
+  // contact form -> FormSubmit (AJAX, stays on page)
+  const cf=document.getElementById('contactForm');
+  if(cf){
+    const msg=document.getElementById('formMsg');
+    const show=(t,c)=>{msg.textContent=t;msg.style.color=c;msg.style.display='block'};
+    cf.addEventListener('submit',async(e)=>{
+      e.preventDefault();
+      const btn=cf.querySelector('button[type=submit]'),label=btn.textContent;
+      btn.disabled=true;btn.textContent='Sending…';msg.style.display='none';
+      try{
+        const r=await fetch('https://api.web3forms.com/submit',{
+          method:'POST',
+          headers:{'Content-Type':'application/json',Accept:'application/json'},
+          body:JSON.stringify(Object.fromEntries(new FormData(cf)))
+        });
+        const d=await r.json();
+        if(r.ok&&d.success){
+          cf.reset();
+          show('✅ Thanks! Your request was sent to Alfa Motors — we\'ll get back to you shortly.','var(--cyan-bright)');
+        }else{throw new Error(d.message||'failed')}
+      }catch(err){
+        show('⚠️ Sorry, that didn\'t go through. Please call (469) 951-0500.','#ff6b6b');
+      }finally{
+        btn.disabled=false;btn.textContent=label;
+      }
+    });
+  }
 </script>
 </body>
 </html>
