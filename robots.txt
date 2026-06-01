@@ -1,0 +1,5 @@
+# robots.txt for Alfa Motors
+User-agent: *
+Allow: /
+
+Sitemap: https://alfamotorssherman.com/sitemap.xml
